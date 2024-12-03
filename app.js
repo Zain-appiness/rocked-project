@@ -36,7 +36,7 @@ db.sequelize.authenticate()
   });
 
   // Sync the models with the database
-  db.sequelize.sync({ alter: true }) // Use `force: true` to recreate tables if needed
+  db.sequelize.sync({ alter: false }) // Use `force: true` to recreate tables if needed
   .then(() => {
     console.log('Database and tables synced successfully!');
   })

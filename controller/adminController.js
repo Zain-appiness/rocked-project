@@ -1,4 +1,4 @@
-const Content= require('../model/content');
+const {Content}= require('../model');
 
 
 //TO FETCH ALL THE LIST OF CONTENT FOR ADMIN
@@ -43,7 +43,7 @@ async function getContentById(req,res) {
 //TO SAVE CONTENT WITH PROPER STATUS
 async function saveContent(req,res) {
     const contentData= req.body;
-
+    console.log(contentData);
     if(!["DRAFT","PUBLISH"].includes(contentData.status)){
         return res.status(404).json({
             error:"NO STATUS OR INVALID STATUS",
@@ -63,58 +63,83 @@ async function saveContent(req,res) {
 }
 
 //UPDATE FUNCTION OF CONTENT BY ID
-async function updateContentById(req,res) {
-    const {id}= req.params;
-    const updateData= req.body;
-    if(!["PUBLISH"].includes(updateDate.status)){
-        return res.status(404).json({
-            error:"NO STATUS OR INVALID STATUS",
+async function updateContentById(req, res) {
+    const { id } = req.params;
+    const updateData = req.body;
+
+   
+    if (!["PUBLISH"].includes(updateData.status)) {
+        return res.status(400).json({
+            error: "Invalid status. Status must be 'PUBLISH'."
         });
     }
+
     try {
-        const content = await Content.findByPk(id);
-        if(!content){
+
+        let content = await Content.findByPk(id);
+        if (!content) {
             return res.status(404).json({
-                error:"Content not found"
+                error: "Content not found"
             });
         }
-        content=updateData;
+
+     
+        content.videoCode = updateData.videoCode || content.videoCode;
+        content.videoTitle = updateData.videoTitle || content.videoTitle;
+        content.Description = updateData.Description || content.Description;
+        content.videoTag = updateData.videoTag || content.videoTag;
+        content.thumbNail = updateData.thumbNail || content.thumbNail;
+        content.publishDate = updateData.publishDate || content.publishDate;
+        content.status = updateData.status || content.status;
+
         
         await content.save();
-        res.status(201).json({
-            message:"Content saved successfully",
+
+        res.status(200).json({
+            message: "Content updated successfully",
             content,
-        }); 
+        });
     } catch (error) {
         res.status(500).json({
             error: error.message
         });
     }
-
 }
 
 //LIST ALL PUBLISHED DATA TO USER
-async function getPublishedContent(req,res) {
-    const {page=1,size=10} = req.query;
-
+async function getPublishedContent(req, res) {
     
-        const limit= parseInt(size);
-        const offset= (page-1)*size;
+    const { page = 1, size = 10 } = req.query;
+
+    const limit = parseInt(size);
+    const offset = (page - 1) * size;
+
     try {
-        const contents= await Content.findAndCountAll({
-            where: { status: "PUBLISH"},
-            attributes: ["videoTitle","Description","videoTag"],
+
+        const contents = await Content.findAll({
+            where: { status: "PUBLISH" }, 
+            attributes: ["videoTitle", "Description", "videoTag"],
             limit,
             offset,
         });
-        res.status(200).json(({
-            message:"PUBLISHED DATA",
-            data: contents.rows,
-        }));
+
+        console.log(contents)
+      
+        if (contents.count === 0) {
+            return res.status(404).json({
+                message: "No published content found",
+            });
+        }
+
+        res.status(200).json({
+            message: "PUBLISHED DATA",
+            data: contents,
+        });
     } catch (error) {
         res.status(500).json({
-            error: error.message
+            error: error.message,
         });
     }
 }
+
 module.exports={getAllContetnt,saveContent,getContentById,updateContentById,getPublishedContent};
